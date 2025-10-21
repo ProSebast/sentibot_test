@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sentibot Test</title>
+</head>
+<body>
+    <h1>Prueba de Sentibot</h1>
+    <video id="video" width="320" height="240" autoplay></video>
+    <button id="capture">Capturar y Analizar</button>
+    <p id="result"></p>
+
+    <script>
+        const video = document.getElementById('video');
+        const capture = document.getElementById('capture');
+        const result = document.getElementById('result');
+
+        // Pedir cámara
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => video.srcObject = stream)
+            .catch(err => console.error(err));
+
+        capture.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'capture.png');
+
+                const response = await fetch('http://127.0.0.1:8000/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                result.textContent = `Emoción: ${data.emotion}, Confianza: ${data.confidence.toFixed(2)}`;
+            }, 'image/png');
+        });
+    </script>
+</body>
+</html>
